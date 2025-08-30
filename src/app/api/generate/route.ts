@@ -63,10 +63,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Extract image data from response
-    const parts = response.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find((p: any) => p?.inlineData?.data);
+    interface ContentPart {
+      inlineData?: { mimeType?: string; data?: string };
+      text?: string;
+    }
+    const parts: ContentPart[] = response.candidates?.[0]?.content?.parts || [];
+    const imgPart = parts.find((p) => p.inlineData?.data);
     if (!imgPart?.inlineData?.data) {
-      const msg = parts.map((p: any) => p?.text).filter(Boolean).join("\n");
+      const msg = parts.map((p) => p.text).filter(Boolean).join("\n");
       return NextResponse.json({ error: msg || "Модель не вернула изображение" }, { status: 400 });
     }
     const raw = Buffer.from(imgPart.inlineData.data, "base64");
@@ -81,8 +85,9 @@ export async function POST(req: NextRequest) {
       latency_ms: Date.now() - t0
     });
 
-  } catch (e: any) {
-    console.error("GENERATION_ERROR:", e?.message);
-    return NextResponse.json({ error: `AI call failed: ${e?.message || "Server error"}` }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMsg = typeof e === "object" && e !== null && "message" in e ? (e as { message?: string }).message : undefined;
+    console.error("GENERATION_ERROR:", errorMsg);
+    return NextResponse.json({ error: `AI call failed: ${errorMsg || "Server error"}` }, { status: 500 });
   }
 }

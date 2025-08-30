@@ -1,5 +1,5 @@
 {
-  "name": "wb-ig-tryon",
+  "name": "nb1",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,11 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@google/genai": "^1.16.0",
+    "@google/genai": "1.16.0",
     "next": "15.5.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "sharp": "^0.34.3"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
