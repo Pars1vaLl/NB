@@ -10,6 +10,7 @@ type Body = {
   userImageBase64: string;   // dataURL или чистый base64
   libImageBase64: string;    // dataURL или чистый base64
   preset: "wb" | "ig-portrait" | "ig-square";
+  prompt: string;
 };
 
 const PRESETS = {
@@ -36,7 +37,7 @@ function parseInline(b64: string) {
 export async function POST(req: NextRequest) {
   const t0 = Date.now();
   try {
-    const { mode, userImageBase64, libImageBase64, preset } = (await req.json()) as Body;
+    const { mode, userImageBase64, libImageBase64, preset, prompt } = (await req.json()) as Body;
 
     if (!mode || !userImageBase64 || !libImageBase64) {
       return NextResponse.json({ error: "Нужно два изображения и режим" }, { status: 400 });
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
         parts: [
           { inlineData: { mimeType: u.mime, data: u.data } },
           { inlineData: { mimeType: l.mime, data: l.data } },
-          { text: instruction(mode) },
+          { text: prompt || instruction(mode) },
         ]
       }],
     });
@@ -68,9 +69,9 @@ export async function POST(req: NextRequest) {
       text?: string;
     }
     const parts: ContentPart[] = response.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find((p) => p.inlineData?.data);
+    const imgPart = parts.find((p) => p?.inlineData?.data);
     if (!imgPart?.inlineData?.data) {
-      const msg = parts.map((p) => p.text).filter(Boolean).join("\n");
+      const msg = parts.map((p) => p?.text).filter(Boolean).join("\n");
       return NextResponse.json({ error: msg || "Модель не вернула изображение" }, { status: 400 });
     }
     const raw = Buffer.from(imgPart.inlineData.data, "base64");
@@ -86,8 +87,8 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (e: unknown) {
-    const errorMsg = typeof e === "object" && e !== null && "message" in e ? (e as { message?: string }).message : undefined;
-    console.error("GENERATION_ERROR:", errorMsg);
-    return NextResponse.json({ error: `AI call failed: ${errorMsg || "Server error"}` }, { status: 500 });
+    const errorMessage = typeof e === "object" && e !== null && "message" in e ? (e as { message?: string }).message : undefined;
+    console.error("GENERATION_ERROR:", errorMessage);
+    return NextResponse.json({ error: `AI call failed: ${errorMessage || "Server error"}` }, { status: 500 });
   }
 }
