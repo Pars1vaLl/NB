@@ -12,7 +12,11 @@ export async function GET() {
     const r = await fetch(url, { method: "GET" });
     const txt = await r.text();
     return NextResponse.json({ ok: r.ok, status: r.status, sample: txt.slice(0, 200) });
-  } catch (err: any) {
-    return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage =
+      typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message?: unknown }).message)
+        : String(err);
+    return NextResponse.json({ ok: false, error: errorMessage }, { status: 500 });
   }
 }
